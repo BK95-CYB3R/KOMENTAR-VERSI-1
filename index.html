@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FB Editor Pro - BayuDubai Cyber Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { 
+            --cp-pink: #ff007f;
+            --cp-blue: #00bcd4;
+            --cp-bg: #0d0208;
+            --panel-bg: rgba(20, 0, 10, 0.95);
+        }
+
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        body { 
+            background-color: var(--cp-bg); 
+            margin: 0; 
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Matrix Background */
+        #matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.3; }
+
+        /* Marquee Top */
+        .marquee-top {
+            width: 100%; background: var(--cp-pink); color: #000; padding: 10px 0;
+            font-family: 'Fira Code', monospace; font-weight: 900; font-size: 14px;
+            white-space: nowrap; overflow: hidden; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 0 20px var(--cp-pink); border-bottom: 2px solid #000;
+        }
+        .marquee-top span { display: inline-block; padding-left: 100%; animation: marquee 15s linear infinite; }
+        @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
+        /* PREVIEW AREA */
+        #capture-area {
+            background: white;
+            padding: 15px; 
+            width: 100%;
+            max-width: 450px; 
+            border-radius: 8px;
+            margin-top: 30px;
+            box-shadow: 0 0 30px rgba(255, 0, 127, 0.4);
+        }
+
+        .comment-wrap { position: relative; }
+        .thread-line { position: absolute; left: 22px; top: 45px; bottom: -5px; width: 2px; background-color: #ced0d4; z-index: 1; }
+        .comment-row { display: flex; gap: 10px; margin-bottom: 2px; position: relative; z-index: 2; }
+        .avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #eee; }
+        
+        .bubble { background: #f0f2f5; padding: 8px 14px; border-radius: 18px; flex-grow: 1; max-width: 85%; }
+        .name-wrapper { display: flex; align-items: center; gap: 4px; }
+        
+        .name { font-weight: 700; font-size: 14px; color: #050505; } 
+        
+        .v-badge { width: 12px; height: 12px; display: none; margin-top: 1px; }
+        .text { font-size: 14.5px; line-height: 1.35; color: #050505; word-break: break-word; margin-top: 1px; } 
+        
+        /* FOOTER: Geser kanan sedikit sesuai permintaan */
+        .footer { 
+            margin-left: 68px; /* Ditambah dari 60px agar lebih ke kanan */
+            font-size: 12px; 
+            color: #65676b; 
+            font-weight: 700; 
+            margin-top: 2px; 
+            margin-bottom: 10px; 
+            position: relative; 
+            z-index: 2; 
+            display: flex; 
+            gap: 12px; 
+        }
+        .blue { color: #1877f2 !important; }
+        .reply-container { margin-left: 48px; position: relative; }
+        .reply-line { position: absolute; left: -26px; top: 0; width: 20px; height: 20px; border-left: 2px solid #ced0d4; border-bottom: 2px solid #ced0d4; border-bottom-left-radius: 10px; }
+        .creator-tag { font-size: 11px; color: #65676b; display: flex; align-items: center; gap: 4px; margin-bottom: 2px; font-weight: 700; }
+
+        /* EDITOR PANEL CYBERPINK */
+        #editor-panel {
+            width: 100%; max-width: 450px; 
+            background: var(--panel-bg); 
+            color: white;
+            padding: 20px; margin-top: 30px; 
+            border-radius: 12px; margin-bottom: 80px;
+            border: 2px solid var(--cp-pink);
+            box-shadow: 0 0 25px var(--cp-pink), inset 0 0 10px var(--cp-pink);
+            font-family: 'Fira Code', monospace;
+            backdrop-filter: blur(5px);
+        }
+
+        .warning-box {
+            background: rgba(255, 0, 127, 0.15);
+            border: 1px dashed var(--cp-pink);
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            color: #ffb3d9;
+            font-size: 11px;
+            line-height: 1.5;
+            text-shadow: 0 0 5px var(--cp-pink);
+        }
+        .warning-box b { color: var(--cp-pink); font-weight: 900; letter-spacing: 1px; }
+
+        .panel-header { 
+            color: var(--cp-pink); text-align: center; font-size: 18px; font-weight: 700;
+            margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;
+            border-bottom: 2px dashed var(--cp-pink); padding-bottom: 10px;
+        }
+
+        .input-group { 
+            margin-bottom: 15px; 
+            border: 1px solid var(--cp-blue); 
+            padding: 15px; 
+            border-radius: 8px;
+            background: rgba(0, 188, 212, 0.05);
+        }
+
+        label { display: block; font-size: 11px; color: var(--cp-blue); margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
+        
+        input, textarea, select { 
+            width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #444; 
+            background: #000; color: #fff; font-size: 13px; margin-bottom: 10px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        input:focus { border-color: var(--cp-pink); outline: none; box-shadow: 0 0 5px var(--cp-pink); }
+
+        .checkbox-group { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--cp-pink); }
+        .checkbox-group input { width: auto; margin: 0; }
+        
+        .btn-save {
+            width: 100%; background: var(--cp-pink); color: #000; border: none; 
+            padding: 15px; border-radius: 4px; font-weight: 900; font-size: 16px; 
+            cursor: pointer; text-transform: uppercase;
+            clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
+            transition: 0.3s;
+        }
+        .btn-save:hover { background: white; box-shadow: 0 0 20px var(--cp-pink); transform: scale(1.02); }
+
+        .footer-warning {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: var(--cp-pink); color: #000;
+            text-align: center; padding: 10px; font-weight: 900;
+            font-family: 'Fira Code', monospace; font-size: 12px;
+            z-index: 101; letter-spacing: 1px;
+            box-shadow: 0 0 20px var(--cp-pink); border-top: 2px solid #000;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="matrix-bg"></canvas>
+
+<div class="marquee-top">
+    <span>[SISTEM DIRETAS] FACEBOOK REPLICA By.BayuDubai — AKSES DITERIMA — [SISTEM DIRETAS]</span>
+</div>
+
+<div id="capture-area">
+    <div class="comment-wrap">
+        <div class="thread-line"></div>
+
+        <div class="comment-row">
+            <img id="view-img1" class="avatar" src="https://via.placeholder.com/42">
+            <div class="bubble">
+                <div class="name-wrapper">
+                    <span class="name" id="out-name1">Tita Ariyanti</span>
+                    <img src="Centang_biru.png" class="v-badge" id="badge1">
+                </div>
+                <div class="text" id="out-text1">Masih Abang Jakarta Hadir masyallah...</div>
+            </div>
+        </div>
+        <div class="footer">
+            <span id="out-time1">1 mnt</span> 
+            <span id="out-like1">Suka</span> 
+            <span>Balas</span>
+            <span>Sembunyikan</span>
+        </div>
+
+        <div class="reply-container">
+            <div class="reply-line"></div>
+            <div class="comment-row">
+                <img id="view-img2" class="avatar" style="width:34px; height:34px;" src="https://via.placeholder.com/34">
+                <div class="bubble">
+                    <div class="creator-tag">✎ Pembuat</div>
+                    <div class="name-wrapper">
+                        <span class="name" id="out-name2">Bayu Kurniawan</span>
+                        <img src="Centang_biru.png" class="v-badge" id="badge2" style="display: block;">
+                    </div>
+                    <div class="text">
+                        <span class="blue" id="out-mention" style="font-weight:700;">Tita Ariyanti</span> 
+                        <span id="out-text2">cek inbox kak gercek kirim no dana/rek</span>
+                    </div>
+                </div>
+            </div>
+            <div class="footer" style="margin-left: 58px;">
+                <span id="out-time2">Baru saja</span> 
+                <span id="out-like2">Suka</span> 
+                <span>Balas</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editor-panel">
+    <div class="warning-box">
+        <b>[!] PERINGATAN PENTING:</b><br>
+        JANGAN DI SEBAR! Jika web ini disebarkan tanpa sepengetahuan BayuDubai, maka sistem akan <b>DINONAKTIFKAN</b> secara permanen.
+    </div>
+
+    <div class="panel-header">>_ INJEKSI DATA FB</div>
+    
+    <div class="input-group">
+        <label>TARGET 1 (PENGIRIM):</label>
+        <input type="file" accept="image/*" onchange="loadImg(event, 'view-img1')">
+        <input type="text" id="in-name1" value="Tita Ariyanti" oninput="sync()">
+        <textarea id="in-text1" rows="2" oninput="sync()">Masih Abang Jakarta Hadir masyallah...</textarea>
+        
+        <div class="checkbox-group">
+            <input type="checkbox" id="check-badge1" onchange="sync()"> <label for="check-badge1">Centang Biru</label>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:10px">
+            <div style="flex:1"><label>WAKTU:</label><input type="text" id="in-time1" value="1 mnt" oninput="sync()"></div>
+            <div style="flex:1"><label>LIKE:</label><select id="in-like1" onchange="sync()"><option value="gray">Abu-abu</option><option value="blue">Biru</option></select></div>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>TARGET 2 (PEMBUAT/ADMIN):</label>
+        <input type="file" accept="image/*" onchange="loadImg(event, 'view-img2')">
+        <input type="text" id="in-name2" value="Bayu Kurniawan" oninput="sync()">
+        <textarea id="in-text2" rows="2" oninput="sync()">cek inbox kak gercek kirim no dana/rek</textarea>
+        
+        <div class="checkbox-group">
+            <input type="checkbox" id="check-badge2" onchange="sync()" checked> <label for="check-badge2">Centang Biru</label>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:10px">
+            <div style="flex:1"><label>WAKTU:</label><input type="text" id="in-time2" value="Baru saja" oninput="sync()"></div>
+            <div style="flex:1"><label>LIKE:</label><select id="in-like2" onchange="sync()"><option value="gray">Abu-abu</option><option value="blue">Biru</option></select></div>
+        </div>
+    </div>
+
+    <button class="btn-save" onclick="download()">💾 EKSEKUSI & SIMPAN PNG</button>
+</div>
+
+<div class="footer-warning">
+    AREA TERLARANG: JANGAN DI SEBAR (By.BayuDUBAI) — SYSTEM OVERRIDE ACTIVE
+</div>
+
+<script>
+    function sync() {
+        const n1 = document.getElementById('in-name1').value;
+        const t1 = document.getElementById('in-text1').value;
+        const time1 = document.getElementById('in-time1').value;
+        const like1 = document.getElementById('in-like1').value;
+        const badge1 = document.getElementById('check-badge1').checked;
+
+        const n2 = document.getElementById('in-name2').value;
+        const t2 = document.getElementById('in-text2').value;
+        const time2 = document.getElementById('in-time2').value;
+        const like2 = document.getElementById('in-like2').value;
+        const badge2 = document.getElementById('check-badge2').checked;
+
+        document.getElementById('out-name1').innerText = n1;
+        document.getElementById('out-text1').innerText = t1;
+        document.getElementById('out-time1').innerText = time1;
+        document.getElementById('out-like1').className = (like1 === 'blue' ? 'blue' : '');
+        document.getElementById('badge1').style.display = badge1 ? 'block' : 'none';
+
+        document.getElementById('out-name2').innerText = n2;
+        document.getElementById('out-text2').innerText = t2;
+        document.getElementById('out-mention').innerText = n1;
+        document.getElementById('out-time2').innerText = time2;
+        document.getElementById('out-like2').className = (like2 === 'blue' ? 'blue' : '');
+        document.getElementById('badge2').style.display = badge2 ? 'block' : 'none';
+    }
+
+    function loadImg(e, id) {
+        if(e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = () => { document.getElementById(id).src = reader.result; };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    }
+
+    function download() {
+        const area = document.getElementById('capture-area');
+        html2canvas(area, { 
+            scale: 3, 
+            backgroundColor: "#ffffff",
+            useCORS: true 
+        }).then(canvas => {
+            const a = document.createElement('a');
+            a.href = canvas.toDataURL("image/png");
+            a.download = 'fb-bayudubai-cyber-v4.png';
+            a.click();
+        });
+    }
+
+    // Matrix Effect
+    const canvas = document.getElementById('matrix-bg');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const drops = Array(Math.floor(canvas.width/16)).fill(1);
+    function draw() {
+        ctx.fillStyle = "rgba(13, 2, 8, 0.1)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#ff007f";
+        drops.forEach((y, i) => {
+            ctx.fillText(String.fromCharCode(Math.random()*128), i*16, y*16);
+            if (y*16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        });
+    }
+    setInterval(draw, 50);
+</script>
+
+</body>
+</html>
